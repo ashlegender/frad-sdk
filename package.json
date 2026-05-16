@@ -1,0 +1,60 @@
+{
+  "name": "@fradanalysis/sdk",
+  "version": "0.1.0",
+  "description": "Faraday Analysis client SDK — a verified trading-signal marketplace on Solana. Read the marketplace, stake $FRAD, publish hash-committed signals, and buy access; payments settle in $FRAD with SOL auto-swap via Jupiter.",
+  "license": "MIT",
+  "author": "Faraday Analysis",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ashlegender/frad-sdk.git"
+  },
+  "homepage": "https://github.com/ashlegender/frad-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/ashlegender/frad-sdk/issues"
+  },
+  "keywords": [
+    "solana",
+    "trading-signals",
+    "signals",
+    "defi",
+    "faraday",
+    "frad",
+    "sdk",
+    "jupiter",
+    "marketplace",
+    "staking",
+    "web3"
+  ],
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@noble/hashes": "^1.4.0",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.95.3",
+    "bs58": "^6.0.0",
+    "tweetnacl": "^1.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.4"
+  }
+}
