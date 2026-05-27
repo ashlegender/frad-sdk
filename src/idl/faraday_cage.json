@@ -1,0 +1,1009 @@
+{
+  "address": "2utcRWTKBXX8mxEUetTDcHkVPr6DvQxcU42PYVP1kHa3",
+  "metadata": {
+    "name": "faraday_cage",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Faraday Cage — staking gate + immutable signal hash log for Faraday Analysis ($FRAD)"
+  },
+  "instructions": [
+    {
+      "name": "initialize",
+      "docs": [
+        "One-time setup. Records the stake mint, the admin and the backend",
+        "operator key, and the minimum stake (in raw token units, so it works",
+        "with any mint decimals). Only the program's upgrade authority may call",
+        "this — otherwise anyone could front-run the deploy and seize the",
+        "singleton config forever."
+      ],
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "program",
+          "docs": [
+            "This program's own executable account — ties `program_data` to us."
+          ],
+          "address": "2utcRWTKBXX8mxEUetTDcHkVPr6DvQxcU42PYVP1kHa3"
+        },
+        {
+          "name": "program_data",
+          "docs": [
+            "Upgradeable-loader state; its upgrade authority must be the signer,",
+            "so only the deployer can initialize (no config front-running)."
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "min_stake",
+          "type": "u64"
+        },
+        {
+          "name": "operator",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "publish_signal",
+      "docs": [
+        "Write a signal fingerprint to the immutable log. `hash` is the SHA-256",
+        "of the canonical signal content (asset, direction, entry, target, stop,",
+        "horizon). The cluster clock provides the canonical publication",
+        "timestamp. Signer must be the provider's wallet or the operator."
+      ],
+      "discriminator": [
+        169,
+        80,
+        49,
+        93,
+        169,
+        216,
+        95,
+        190
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "provider.wallet",
+                "account": "Provider"
+              }
+            ]
+          }
+        },
+        {
+          "name": "signal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  105,
+                  103,
+                  110,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "provider.wallet",
+                "account": "Provider"
+              },
+              {
+                "kind": "account",
+                "path": "provider.signal_count",
+                "account": "Provider"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "set_admin",
+      "docs": [
+        "Transfer admin to a new authority (e.g. a multisig)."
+      ],
+      "discriminator": [
+        251,
+        163,
+        0,
+        52,
+        91,
+        194,
+        187,
+        92
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_admin",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "set_min_stake",
+      "docs": [
+        "Change the minimum stake, in raw token units (admin only)."
+      ],
+      "discriminator": [
+        11,
+        62,
+        97,
+        159,
+        11,
+        240,
+        52,
+        20
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_min_stake",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "set_mint",
+      "docs": [
+        "Swap the accepted mint (admin only). Used to replace the devnet test",
+        "token with the real $FRAD once it launches. Migration: providers fully",
+        "unstake first (this closes their vault), then restake after the swap —",
+        "the vault is re-created with the new mint. Providers who miss the",
+        "window can still withdraw: `unstake` validates the mint against the",
+        "vault, not the config."
+      ],
+      "discriminator": [
+        166,
+        129,
+        167,
+        223,
+        137,
+        118,
+        212,
+        47
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_mint",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "set_operator",
+      "docs": [
+        "Point the program at a different backend operator key (admin only)."
+      ],
+      "discriminator": [
+        238,
+        153,
+        101,
+        169,
+        243,
+        131,
+        36,
+        1
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_operator",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "stake",
+      "docs": [
+        "Lock $FRAD to become (or top up as) a provider. Creates the provider",
+        "record and its vault on first call. The resulting total must meet the",
+        "minimum stake; everything above it counts toward higher tiers."
+      ],
+      "discriminator": [
+        206,
+        176,
+        202,
+        18,
+        200,
+        209,
+        179,
+        108
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "wallet_token_account",
+          "writable": true
+        },
+        {
+          "name": "wallet",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "unstake",
+      "docs": [
+        "Withdraw staked $FRAD. Partial withdrawals must leave at least the",
+        "minimum stake. Withdrawing everything deactivates the provider (the",
+        "record and its signal history stay on-chain forever), sweeps the whole",
+        "vault balance — including any tokens mistakenly sent to the vault",
+        "directly — and closes the vault, so a later restake re-creates it with",
+        "whatever mint is configured at that time."
+      ],
+      "discriminator": [
+        90,
+        95,
+        107,
+        42,
+        205,
+        124,
+        50,
+        225
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "Deliberately validated against the VAULT's mint, not config.mint —",
+            "withdrawing an old bond must keep working after an admin mint swap."
+          ]
+        },
+        {
+          "name": "wallet_token_account",
+          "writable": true
+        },
+        {
+          "name": "wallet",
+          "docs": [
+            "Mut: closing the vault on full exit refunds its rent to the wallet."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    },
+    {
+      "name": "Provider",
+      "discriminator": [
+        164,
+        180,
+        71,
+        17,
+        75,
+        216,
+        80,
+        195
+      ]
+    },
+    {
+      "name": "SignalRecord",
+      "discriminator": [
+        32,
+        240,
+        214,
+        122,
+        207,
+        184,
+        220,
+        121
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "ProviderStaked",
+      "discriminator": [
+        151,
+        129,
+        128,
+        209,
+        68,
+        84,
+        31,
+        248
+      ]
+    },
+    {
+      "name": "ProviderUnstaked",
+      "discriminator": [
+        118,
+        159,
+        47,
+        86,
+        193,
+        154,
+        153,
+        190
+      ]
+    },
+    {
+      "name": "SignalPublished",
+      "discriminator": [
+        27,
+        49,
+        10,
+        82,
+        168,
+        186,
+        203,
+        42
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidArgument",
+      "msg": "Amount or argument must be greater than zero"
+    },
+    {
+      "code": 6001,
+      "name": "BelowMinimumStake",
+      "msg": "Resulting stake is below the minimum required"
+    },
+    {
+      "code": 6002,
+      "name": "InsufficientStake",
+      "msg": "Not enough staked tokens for this withdrawal"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidUnstakeAmount",
+      "msg": "Partial unstake must leave zero or at least the minimum stake"
+    },
+    {
+      "code": 6004,
+      "name": "UnauthorizedPublisher",
+      "msg": "Signer is neither the provider wallet nor the operator"
+    },
+    {
+      "code": 6005,
+      "name": "ProviderInactive",
+      "msg": "Provider is inactive — stake the minimum to reactivate"
+    },
+    {
+      "code": 6006,
+      "name": "UnauthorizedAdmin",
+      "msg": "Only the config admin can do this"
+    },
+    {
+      "code": 6007,
+      "name": "WrongMint",
+      "msg": "Token account mint does not match the configured mint"
+    },
+    {
+      "code": 6008,
+      "name": "WrongTokenAccountOwner",
+      "msg": "Token account is not owned by the signing wallet"
+    },
+    {
+      "code": 6009,
+      "name": "MathOverflow",
+      "msg": "Arithmetic overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "Config",
+      "docs": [
+        "Global protocol config. PDA: [\"config\"]."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "docs": [
+              "Authority allowed to update this config."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "operator",
+            "docs": [
+              "Backend hot wallet allowed to publish signals on providers' behalf."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "docs": [
+              "The accepted stake token ($FRAD; a test mint on devnet)."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "min_stake",
+            "docs": [
+              "Minimum provider stake in raw token units."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "provider_count",
+            "docs": [
+              "Number of providers that ever registered (never decremented)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "signal_count",
+            "docs": [
+              "Total signals ever published across all providers."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "reserved",
+            "docs": [
+              "Headroom for future fields without a state migration."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Provider",
+      "docs": [
+        "One record per provider wallet. PDA: [\"provider\", wallet]. Never closed,",
+        "so the signal index keeps growing across unstake/restake cycles and old",
+        "signal PDAs can never collide with new ones."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "staked",
+            "docs": [
+              "Currently locked stake in raw token units."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "signal_count",
+            "docs": [
+              "Number of signals published; doubles as the next signal index."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "registered_at",
+            "type": "i64"
+          },
+          {
+            "name": "active",
+            "docs": [
+              "False once the provider fully unstakes; publishing requires true."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProviderStaked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "total_staked",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProviderUnstaked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "remaining",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SignalPublished",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "provider",
+            "type": "pubkey"
+          },
+          {
+            "name": "hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "index",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SignalRecord",
+      "docs": [
+        "Immutable signal fingerprint. PDA: [\"signal\", provider_wallet, index_le].",
+        "There is deliberately no instruction that mutates or closes this account."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "provider",
+            "docs": [
+              "Provider wallet (not the provider PDA)."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "hash",
+            "docs": [
+              "SHA-256 of the canonical signal content."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "timestamp",
+            "docs": [
+              "Cluster unix timestamp at publication — the canonical proof-of-time."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "index",
+            "docs": [
+              "Sequential per-provider index."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
