@@ -4,7 +4,7 @@ import type { Signer } from "./signer";
 import { FradChain } from "./chain";
 import * as swap from "./swap";
 import { signalHashHex } from "./canonical";
-import type { ProtocolConfig, Provider, Signal, SignalVerification, Stats, Price, TokenInfo, ProviderAudit, SignalCheck } from "./types";
+import type { ProtocolConfig, Provider, Signal, SignalVerification, Stats, Price, TokenInfo, ProviderAudit, SignalCheck, ProviderStats } from "./types";
 
 export interface FradClientOptions {
   apiUrl: string;
@@ -175,6 +175,77 @@ export class FradClient {
       ok: mismatches.length === 0,
       mismatches,
       checks,
+    };
+  }
+
+  /**
+   * Performance analytics for a provider, computed client-side from public
+   * signal data — win rate, average return, win streaks and a per-asset
+   * breakdown. Pairs with `verifyProvider`: audit the record, then measure it.
+   */
+  async providerStats(id: string): Promise<ProviderStats> {
+    const [provider, { signals }] = await Promise.all([
+      this.public.provider(id),
+      this.public.signals(id),
+    ]);
+
+    const count = (s: Signal["status"]) => signals.filter((x) => x.status === s).length;
+    const wins = count("win");
+    const losses = count("loss");
+    const decided = wins + losses;
+
+    const returns = signals.map((s) => s.returnPct).filter((r): r is number => r != null);
+    const avgReturnPct = returns.length ? returns.reduce((a, b) => a + b, 0) / returns.length : null;
+
+    // chronological order for streaks (oldest → newest)
+    const ordered = [...signals].sort((a, b) => a.idx - b.idx);
+    let bestStreak = 0;
+    let run = 0;
+    let currentStreak = 0;
+    for (const s of ordered) {
+      if (s.status === "win") {
+        run += 1;
+        bestStreak = Math.max(bestStreak, run);
+      } else if (s.status === "loss" || s.status === "expired") {
+        run = 0;
+      }
+    }
+    // current streak = trailing wins up to the latest decided signal
+    for (let i = ordered.length - 1; i >= 0; i--) {
+      const st = ordered[i].status;
+      if (st === "win") currentStreak += 1;
+      else if (st === "loss" || st === "expired") break;
+    }
+
+    const byAssetMap = new Map<string, ProviderStats["byAsset"][number]>();
+    for (const s of signals) {
+      const a = byAssetMap.get(s.asset) ?? {
+        asset: s.asset,
+        assetSymbol: s.assetSymbol ?? null,
+        total: 0,
+        wins: 0,
+        losses: 0,
+      };
+      a.total += 1;
+      if (s.status === "win") a.wins += 1;
+      if (s.status === "loss") a.losses += 1;
+      byAssetMap.set(s.asset, a);
+    }
+
+    return {
+      provider: { id: provider.id, wallet: provider.wallet, name: provider.name },
+      total: signals.length,
+      resolved: wins + losses + count("expired"),
+      wins,
+      losses,
+      expired: count("expired"),
+      pending: count("pending"),
+      voided: count("void"),
+      winRate: decided ? wins / decided : null,
+      avgReturnPct,
+      bestStreak,
+      currentStreak,
+      byAsset: [...byAssetMap.values()].sort((a, b) => b.total - a.total),
     };
   }
 
