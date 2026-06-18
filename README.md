@@ -2,6 +2,8 @@
 
 <h1>Faraday&nbsp;Analysis&nbsp;SDK</h1>
 
+<p>Mint: <code>5QHYkDhBp1V417Vj3mSBU5aZMp9KpWcpqd7C45yjpump</code></p>
+
 <p><strong>A verified trading-signal marketplace on Solana.<br/>Every signal's hash is committed on-chain before the outcome is known — so track records can't be faked.</strong></p>
 
 <p>
@@ -76,23 +78,31 @@ import { FradClient, keypairSigner } from '@fradanalysis/sdk';
 import { Keypair } from '@solana/web3.js';
 
 const frad = new FradClient({
-  apiUrl: 'https://your-frad-backend',
-  rpcUrl: 'https://api.mainnet-beta.solana.com',
-  swapUrl: 'https://your-frad-backend/swap', // SOL -> $FRAD quotes (Jupiter)
-  signer: keypairSigner(myKeypair),          // server/bot — or walletSigner(adapter)
+    apiUrl: 'https://your-frad-backend',
+    rpcUrl: 'https://api.mainnet-beta.solana.com',
+    swapUrl: 'https://your-frad-backend/swap', // SOL -> $FRAD quotes (Jupiter)
+    signer: keypairSigner(myKeypair), // server/bot — or walletSigner(adapter)
 });
 
 // Deployment config (program id, $FRAD mint, operator, min stake) — nothing hardcoded
 const cfg = await frad.public.config();
 
 // Browse the marketplace
-const { providers } = await frad.public.providers({ sort: 'cageScore', limit: 10 });
+const { providers } = await frad.public.providers({
+    sort: 'cageScore',
+    limit: 10,
+});
 const { signals } = await frad.public.signals(providers[0].id);
 
 // Buy access to a signal, paying directly in $FRAD
 await frad.auth.createSession();
-const txSig = await payProviderInFrad(/* ... build + send from frad.chain() ... */);
-await frad.consumer.purchase({ signalId: signals[0].id, txSig, currency: 'token' });
+const txSig =
+    await payProviderInFrad(/* ... build + send from frad.chain() ... */);
+await frad.consumer.purchase({
+    signalId: signals[0].id,
+    txSig,
+    currency: 'token',
+});
 ```
 
 In the browser, pass a wallet adapter instead of a keypair:
@@ -102,7 +112,12 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { FradClient, walletSigner } from '@fradanalysis/sdk';
 
 const wallet = useWallet();
-const frad = new FradClient({ apiUrl, rpcUrl, swapUrl, signer: walletSigner(wallet) });
+const frad = new FradClient({
+    apiUrl,
+    rpcUrl,
+    swapUrl,
+    signer: walletSigner(wallet),
+});
 ```
 
 > The protocol config (program id, $FRAD mint, operator, min stake, tickers) is
@@ -121,7 +136,7 @@ const frad = new FradClient({ apiUrl, rpcUrl, swapUrl, signer: walletSigner(wall
    or stop is crossed (or the horizon expires) the outcome is recorded as
    `win` / `loss` / `expired`, and the Cage Score updates.
 
-Because the hash was on-chain *before* the outcome, anyone can later recompute it
+Because the hash was on-chain _before_ the outcome, anyone can later recompute it
 from the revealed fields and confirm the provider didn't change the call.
 
 ## API
@@ -132,62 +147,62 @@ const frad = new FradClient({ apiUrl, rpcUrl, swapUrl, signer });
 
 ### `public` — no signature required
 
-| Method | Description |
-| --- | --- |
-| `public.config()` | Deployment config: program id, $FRAD mint, operator, min stake, tickers. |
-| `public.stats()` | Protocol stats — providers, signals, wins/losses, avg Cage Score, $FRAD burned. |
-| `public.tokens(q)` | Search Solana tokens by symbol/name/mint (for the asset picker). |
-| `public.providers(query)` | Browse providers — filter by asset class, sort, paginate. |
-| `public.provider(id)` | A single provider by UUID. |
-| `public.signals(providerId, opts?)` | A provider's signals (direction masked unless you have access). |
-| `public.signal(hash)` | Verify one signal against its on-chain record. |
-| `public.verifyContentHash(content, hash)` | Recompute the canonical hash locally and compare. |
+| Method                                    | Description                                                                     |
+| ----------------------------------------- | ------------------------------------------------------------------------------- |
+| `public.config()`                         | Deployment config: program id, $FRAD mint, operator, min stake, tickers.        |
+| `public.stats()`                          | Protocol stats — providers, signals, wins/losses, avg Cage Score, $FRAD burned. |
+| `public.tokens(q)`                        | Search Solana tokens by symbol/name/mint (for the asset picker).                |
+| `public.providers(query)`                 | Browse providers — filter by asset class, sort, paginate.                       |
+| `public.provider(id)`                     | A single provider by UUID.                                                      |
+| `public.signals(providerId, opts?)`       | A provider's signals (direction masked unless you have access).                 |
+| `public.signal(hash)`                     | Verify one signal against its on-chain record.                                  |
+| `public.verifyContentHash(content, hash)` | Recompute the canonical hash locally and compare.                               |
 
 ### `auth` — wallet session
 
-| Method | Description |
-| --- | --- |
-| `auth.createSession()` | Sign a challenge with the wallet and open a session token. |
-| `auth.setSessionToken(t)` / `clearSessionToken()` | Reuse / drop an existing session token. |
-| `auth.hasSession()` | Is a session token set? |
+| Method                                            | Description                                                |
+| ------------------------------------------------- | ---------------------------------------------------------- |
+| `auth.createSession()`                            | Sign a challenge with the wallet and open a session token. |
+| `auth.setSessionToken(t)` / `clearSessionToken()` | Reuse / drop an existing session token.                    |
+| `auth.hasSession()`                               | Is a session token set?                                    |
 
 ### `provider` — publish side (auth required)
 
-| Method | Description |
-| --- | --- |
-| `provider.me()` | The connected wallet's provider profile (or `null`). |
-| `provider.register(body)` | Create / update the provider profile (name, asset classes, price in SOL). |
-| `provider.publish(body)` | Publish a signal — hash committed on-chain; returns the signal + tx signature. |
-| `provider.mySignals()` | All of the provider's own signals (unmasked). |
+| Method                    | Description                                                                    |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| `provider.me()`           | The connected wallet's provider profile (or `null`).                           |
+| `provider.register(body)` | Create / update the provider profile (name, asset classes, price in SOL).      |
+| `provider.publish(body)`  | Publish a signal — hash committed on-chain; returns the signal + tx signature. |
+| `provider.mySignals()`    | All of the provider's own signals (unmasked).                                  |
 
 ### `consumer` — buy side (auth required)
 
-| Method | Description |
-| --- | --- |
+| Method                                             | Description                                                       |
+| -------------------------------------------------- | ----------------------------------------------------------------- |
 | `consumer.purchase({ signalId, txSig, currency })` | Record a payment (`'token'` or `'native'`) and unlock the signal. |
-| `consumer.purchases()` | Everything the wallet has bought (unmasked). |
-| `consumer.feed()` | The buyer's unlocked signal feed. |
+| `consumer.purchases()`                             | Everything the wallet has bought (unmasked).                      |
+| `consumer.feed()`                                  | The buyer's unlocked signal feed.                                 |
 
 ### `swap` — SOL ↔ $FRAD (Jupiter)
 
-| Method | Description |
-| --- | --- |
-| `swap.price(mint)` | Current price (tokens per SOL / price in SOL). |
-| `swap.quote(inputMint, outputMint, amount, slippageBps?)` | A Jupiter swap quote. |
-| `swap.buildSwapTx(quote, userPublicKey)` / `swap.deserialize(b64)` | Build / deserialize the swap transaction. |
+| Method                                                             | Description                                    |
+| ------------------------------------------------------------------ | ---------------------------------------------- |
+| `swap.price(mint)`                                                 | Current price (tokens per SOL / price in SOL). |
+| `swap.quote(inputMint, outputMint, amount, slippageBps?)`          | A Jupiter swap quote.                          |
+| `swap.buildSwapTx(quote, userPublicKey)` / `swap.deserialize(b64)` | Build / deserialize the swap transaction.      |
 
 ### `chain()` — on-chain transaction builders
 
 `frad.chain()` returns a browser-safe helper for building (unsigned) transactions
 you then sign and send with your wallet:
 
-| Method | Description |
-| --- | --- |
-| `buildStakeTx(wallet, mint, amountRaw)` | Stake $FRAD into the provider vault. |
-| `buildUnstakeTx(wallet, mint, amountRaw)` | Unstake (partial ≥ min, or full to sweep + close). |
-| `buildFradPaymentTx(from, toWallet, mint, rawAmount)` | Pay a provider directly in $FRAD. |
-| `buildSolPaymentTx(from, toWallet, lamports)` | Raw SOL transfer helper. |
-| `readConfig()` / `readProvider(wallet)` | Read on-chain accounts directly. |
+| Method                                                | Description                                        |
+| ----------------------------------------------------- | -------------------------------------------------- |
+| `buildStakeTx(wallet, mint, amountRaw)`               | Stake $FRAD into the provider vault.               |
+| `buildUnstakeTx(wallet, mint, amountRaw)`             | Unstake (partial ≥ min, or full to sweep + close). |
+| `buildFradPaymentTx(from, toWallet, mint, rawAmount)` | Pay a provider directly in $FRAD.                  |
+| `buildSolPaymentTx(from, toWallet, lamports)`         | Raw SOL transfer helper.                           |
+| `readConfig()` / `readProvider(wallet)`               | Read on-chain accounts directly.                   |
 
 Every method is fully typed; shared shapes (`ProtocolConfig`, `Provider`,
 `Signal`, `SignalVerification`, `Price`, `TokenInfo`, `Stats`, `Signer`,
@@ -219,12 +234,12 @@ import { signalHashHex } from '@fradanalysis/sdk';
 
 // the revealed canonical fields of a purchased/resolved signal
 const recomputed = signalHashHex({
-  asset: signal.asset,        // Solana mint address (base58)
-  direction: signal.direction!,
-  entry: signal.entry!,
-  target: signal.target!,
-  stop: signal.stop!,
-  horizonHours: signal.horizonHours!,
+    asset: signal.asset, // Solana mint address (base58)
+    direction: signal.direction!,
+    entry: signal.entry!,
+    target: signal.target!,
+    stop: signal.stop!,
+    horizonHours: signal.horizonHours!,
 });
 
 // compare against the hash committed on-chain at publish time
@@ -245,7 +260,7 @@ browser matches the one stored on Solana.
 ```ts
 import { keypairSigner, walletSigner } from '@fradanalysis/sdk';
 
-const serverSigner  = keypairSigner(myKeypair);
+const serverSigner = keypairSigner(myKeypair);
 const browserSigner = walletSigner(walletAdapter);
 ```
 
@@ -272,7 +287,11 @@ the package). To point at devnet or another deployment, pass `programId`:
 ```ts
 import { FradClient, DEFAULT_PROGRAM_ID } from '@fradanalysis/sdk';
 
-const frad = new FradClient({ apiUrl, rpcUrl, programId: '<devnet program id>' });
+const frad = new FradClient({
+    apiUrl,
+    rpcUrl,
+    programId: '<devnet program id>',
+});
 ```
 
 ## Requirements
