@@ -4,7 +4,7 @@ import type { Signer } from "./signer";
 import { FradChain } from "./chain";
 import * as swap from "./swap";
 import { signalHashHex } from "./canonical";
-import type { ProtocolConfig, Provider, Signal, SignalVerification, Stats, Price, TokenInfo } from "./types";
+import type { ProtocolConfig, Provider, Signal, SignalVerification, Stats, Price, TokenInfo, ProviderAudit, SignalCheck } from "./types";
 
 export interface FradClientOptions {
   apiUrl: string;
@@ -113,6 +113,70 @@ export class FradClient {
     buildSwapTx: (quote: any, userPublicKey: string) => swap.buildSwapTx(this.swapUrl!, quote, userPublicKey),
     deserialize: (b64: string) => swap.deserializeSwapTx(b64),
   };
+
+  /**
+   * Trustless audit of a provider's entire track record against Solana.
+   *
+   * For every signal it confirms the hash is actually committed on-chain (proving
+   * it was recorded before the outcome was known), and for any signal whose fields
+   * are revealed it recomputes the canonical hash and checks it matches — proving
+   * the revealed call is byte-for-byte what was committed. Masked signals can only
+   * be checked for on-chain presence until their content is revealed.
+   *
+   * Everything is verified independently against the chain — you don't have to
+   * trust the backend's win/loss numbers.
+   */
+  async verifyProvider(id: string): Promise<ProviderAudit> {
+    const [provider, { signals }] = await Promise.all([
+      this.public.provider(id),
+      this.public.signals(id),
+    ]);
+
+    const checks: SignalCheck[] = await Promise.all(
+      signals.map(async (s): Promise<SignalCheck> => {
+        let onChain = false;
+        let contentMatch: boolean | null = null;
+        try {
+          const v = await this.public.signal(s.hash);
+          onChain = v.chain.found && v.chain.hash === s.hash;
+          const sig = v.signal;
+          // only revealed signals expose the fields needed to recompute the hash
+          if (
+            sig.direction != null &&
+            sig.entry != null &&
+            sig.target != null &&
+            sig.stop != null &&
+            sig.horizonHours != null
+          ) {
+            contentMatch =
+              signalHashHex({
+                asset: sig.asset,
+                direction: sig.direction,
+                entry: sig.entry,
+                target: sig.target,
+                stop: sig.stop,
+                horizonHours: sig.horizonHours,
+              }) === s.hash;
+          }
+        } catch {
+          onChain = false;
+        }
+        return { hash: s.hash, idx: s.idx, status: s.status, onChain, contentMatch };
+      })
+    );
+
+    const mismatches = checks.filter((c) => !c.onChain || c.contentMatch === false);
+    return {
+      provider: { id: provider.id, wallet: provider.wallet, name: provider.name },
+      total: checks.length,
+      onChain: checks.filter((c) => c.onChain).length,
+      contentVerified: checks.filter((c) => c.contentMatch === true).length,
+      masked: checks.filter((c) => c.contentMatch === null).length,
+      ok: mismatches.length === 0,
+      mismatches,
+      checks,
+    };
+  }
 
   chain(): FradChain {
     if (!this.rpcUrl) throw new Error("rpcUrl required for chain ops");

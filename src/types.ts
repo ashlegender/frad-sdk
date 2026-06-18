@@ -84,3 +84,27 @@ export interface Stats {
   avgCageScore: number;
   burned?: string;
 }
+
+// One signal's verification result against the chain.
+export interface SignalCheck {
+  hash: string;
+  idx: number;
+  status: SignalStatus;
+  // the signal's hash is actually recorded on-chain (committed before the outcome)
+  onChain: boolean;
+  // recomputed hash of the revealed fields matches the on-chain hash;
+  // null = the signal is still masked, so its content can't be checked yet
+  contentMatch: boolean | null;
+}
+
+// Result of auditing a provider's whole track record against Solana.
+export interface ProviderAudit {
+  provider: { id: string; wallet: string; name: string };
+  total: number;
+  onChain: number;          // how many signal hashes are on-chain
+  contentVerified: number;  // revealed signals whose content matches its hash
+  masked: number;           // signals still masked (content not checkable yet)
+  ok: boolean;              // every hash on-chain and no content mismatch
+  mismatches: SignalCheck[];
+  checks: SignalCheck[];
+}
