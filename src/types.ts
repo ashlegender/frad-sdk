@@ -108,3 +108,29 @@ export interface ProviderAudit {
   mismatches: SignalCheck[];
   checks: SignalCheck[];
 }
+
+// Per-asset slice of a provider's record.
+export interface AssetBreakdown {
+  asset: string;
+  assetSymbol: string | null;
+  total: number;
+  wins: number;
+  losses: number;
+}
+
+// Performance analytics computed client-side from a provider's signals.
+export interface ProviderStats {
+  provider: { id: string; wallet: string; name: string };
+  total: number;
+  resolved: number;            // decided outcomes (win + loss + expired)
+  wins: number;
+  losses: number;
+  expired: number;
+  pending: number;
+  voided: number;
+  winRate: number | null;      // wins / (wins + losses), null if nothing decided
+  avgReturnPct: number | null; // mean returnPct over signals that have one
+  bestStreak: number;          // longest run of consecutive wins
+  currentStreak: number;       // consecutive wins ending at the latest resolved signal
+  byAsset: AssetBreakdown[];
+}
