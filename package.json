@@ -1,6 +1,6 @@
 {
   "name": "@fradanalysis/sdk",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Faraday Analysis client SDK — a verified trading-signal marketplace on Solana. Read the marketplace, stake $FRAD, publish hash-committed signals, and buy access; payments settle in $FRAD with SOL auto-swap via Jupiter.",
   "license": "MIT",
   "author": "Faraday Analysis",
